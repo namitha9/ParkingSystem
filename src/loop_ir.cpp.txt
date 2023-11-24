@@ -1,0 +1,36 @@
+#include <Arduino.h>
+
+const int irSensor1 = 33;
+const int irSensor2 = 34
+const int ledPin = 32;
+
+int irReading;
+
+void setup()
+{
+  Serial.begin(115200);
+  pinMode(irSensor1, INPUT);
+  pinMode(irSensor2, INPUT);
+  pinMode(ledPin, OUTPUT);
+}
+void loop()
+{
+  irReading1 = digitalRead(irSensor1);
+  irReading2 = digitalRead(irSensor2);
+  if (irReading1 == LOW)
+  {
+    digitalWrite(ledPin, HIGH);
+  }
+  else
+  {
+    digitalWrite(ledPin, LOW);
+  }
+  if (irReading2 == LOW)
+  {
+    digitalWrite(ledPin, HIGH);
+  }
+  else
+  {
+    digitalWrite(ledPin, LOW);
+  }
+}

@@ -1,0 +1,103 @@
+#include <Arduino.h>
+#include <LiquidCrystal_I2C.h>
+
+const int IR_Sensor1 = 33;
+const int IR_Sensor2 = 34;
+
+volatile uint64_t count1 = 0;
+volatile uint64_t currentCount1 = -1;
+
+volatile uint64_t count2 = 0;
+volatile uint64_t currentCount2 = -1;
+
+unsigned long currentTime = 0;
+unsigned long lastReadTime = 0;
+unsigned int intervalDelay = 1000;
+
+void IRAM_ATTR isr1()
+{
+  currentTime = millis();
+  // IR Sensor is noisy so we add a debounce mechanism here
+  if (currentTime - lastReadTime > intervalDelay)
+  {
+    count1++;
+    lastReadTime = currentTime;
+  }
+}
+
+void IRAM_ATTR isr2()
+{
+  currentTime = millis();
+  // IR Sensor is noisy so we add a debounce mechanism here
+  if (currentTime - lastReadTime > intervalDelay)
+  {
+    count2++;
+    lastReadTime = currentTime;
+  }
+}
+
+// set the LCD number of columns and rows
+int lcdColumns = 16;
+int lcdRows = 2;
+
+// Check your I2C LCD Address
+LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
+
+// Function to print to LCD
+void printToLCD(const String &message, uint8_t column, uint8_t row, bool isClear)
+{
+  if (isClear)
+  {
+    lcd.clear();
+  }
+  // set cursor to  column,  row
+  lcd.setCursor(column, row);
+  if (message.length() == 0)
+  {
+    lcd.setCursor(0, 1);
+    for (int n = 0; n < 16; n++)
+    {
+      lcd.print(" ");
+    }
+  }
+  else
+  {
+    lcd.print(message);
+  }
+}
+
+void setup()
+{
+  Serial.begin(115200);
+  pinMode(IR_Sensor1, INPUT);
+  pinMode(IR_Sensor2, INPUT);
+  attachInterrupt(digitalPinToInterrupt(IR_Sensor1), isr1, RISING);
+  attachInterrupt(digitalPinToInterrupt(IR_Sensor2), isr2, RISING);
+
+  lcd.init();
+  lcd.clear();
+  lcd.backlight(); // Make sure backlight is on
+  printToLCD("Current Count:", 0, 0, false);
+  delay(1000);
+}
+void loop()
+{
+  Serial.printf("Count1 :: %lld\r\n", count1);
+  Serial.printf("Count2 :: %lld\r\n", count2);
+  if (currentCount1 != count1)
+  {
+    currentCount1 = count1;
+    char buffer[50];
+    ltoa(count1, buffer, 10);
+    // Print a message to the LCD.
+    printToLCD(buffer, 0, 1, false);
+  }
+  if (currentCount2 != count2)
+  {
+    currentCount2 = count2;
+    char buffer[50];
+    ltoa(count2, buffer, 10);
+    // Print a message to the LCD.
+    printToLCD(buffer, 0, 1, false);
+  }
+}
